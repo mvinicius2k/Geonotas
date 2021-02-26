@@ -1,0 +1,56 @@
+<resources>
+    <string name="app_name">Geonotas</string>
+    <string name="txt_login">Login</string>
+    <string name="et_login">Apelido ou E-mail</string>
+    <string name="et_senha">Senha</string>
+    <string name="btn_login">Logar</string>
+    <string name="txt_to_singup"><u>Não possui um login? Crie agora!</u></string>
+    <string name="et_singup_name">Nome</string>
+    <string name="et_singup_surname">Sobrenome</string>
+    <string name="et_singup_nick">Apelido</string>
+    <string name="et_singup_mail">E-mail</string>
+    <string name="et_singup_pass">Senha</string>
+    <string name="et_singup_confirm_pass">Confirme a senha</string>
+    <string name="txt_singup_select_text">Selecione uma imagem de perfil: </string>
+    <string name="btn_singup_select_image"> Selecionar... </string>
+    <string name="btn_singup_ok"> Finalizar </string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="menu_master_my_notes">Minhas notas</string>
+    <string name="menu_master_marked_notes">Notas marcadas</string>
+    <string name="menu_master_map">Mapa</string>
+    <string name="menu_master_preferences">Preferências</string>
+    <string name="menu_master_logout">Sair</string>
+    <string name="txt_login_status_error0">Senha ou login estão errados</string>
+
+
+    <string name="main_add">Adicionar nova nota</string>
+
+    <string name="message_post_new_note_template">fez uma nova nota em</string>
+    <string name="menu_my_notes_edit">Editar</string>
+    <string name="menu_my_notes_sharing">Compartilhamento</string>
+    <string name="menu_my_notes_remove">Remover</string>
+    <string name="et_editcreate_note_message">Escreva sua mensagem aqui...</string>
+    <string name="txt_editcreate_note_mark">Marcar</string>
+    <string name="btn_editcreate_note_editcreate">Criar nota</string>
+
+    <string name="toast_gms_xy_error">Não foi possível obter a sua localização atual</string>
+    <string name="exp_no_conection">Sem conexão disponível</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="txt_note_comments_title">Comentários</string>
+    <string name="hint_note_comment">Escreva um comentário</string>
+    <string name="ac_editcreate_adduser">Apelido do usuário</string>
+    <string name="txt_note_comments_point">" • "</string>
+    <string name="str_note_activity_title">Nota</string>
+    <string name="btn_note_comments_send">Enviar</string>
+    <string name="str_note_activity_empty_message">Escreva algo</string>
+    <string name="str_main_activity_title_main">Geonotas</string>
+    <string name="str_main_activity_title_mynotes">Minhas notas</string>
+    <string name="str_main_activity_title_marked">Notas marcadas</string>
+    <string name="str_main_activity_title_addnote">Nova nota</string>
+    <string name="str_editcreate_activity_finalize">Concluir</string>
+    <string name="str_note_activity_remove_sucess">Nota removida.</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_map">Map</string>
+    <string name="str_map_activity_title">Mapa</string>
+</resources>

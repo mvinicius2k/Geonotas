@@ -1,0 +1,13 @@
+<resources>
+    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="avatar_width">75dp</dimen>
+    <dimen name="avatar_height">75dp</dimen>
+    <dimen name="avatar_margin">5dp</dimen>
+    <dimen name="post_padding_bottom">10dp</dimen>
+    <dimen name="avatar_size_note">150dp</dimen>
+    <dimen name="note_margin_message">5dp</dimen>
+    <dimen name="note_margin_locale">10dp</dimen>
+    <dimen name="map_editcreate_note_height">350dp</dimen>
+    <dimen name="avatar_size_marked"> 70dp</dimen>
+    <dimen name="avatar_size_comments">65dp</dimen>
+</resources>
