@@ -1,16 +1,22 @@
 package br.ufc.geonotas.adapters
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.graphics.Bitmap
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import br.ufc.geonotas.R
+import br.ufc.geonotas.db.UserDB
 import br.ufc.geonotas.models.Comment
 import br.ufc.geonotas.myPalette.Icon
+import kotlinx.coroutines.*
+import java.io.IOException
+import java.lang.Exception
 
-class RvCommentsAdapter (val comments: ArrayList<Comment>): RecyclerView.Adapter<RvCommentsAdapter.MyViewHolder>() {
+class RvCommentsAdapter (val comments: ArrayList<Comment>, val context: Context): RecyclerView.Adapter<RvCommentsAdapter.MyViewHolder>() {
 
     class MyViewHolder(view: View): RecyclerView.ViewHolder(view){
         val avatar = view.findViewById<Icon>(R.id.icn_note_comments_avatar)
@@ -36,12 +42,39 @@ class RvCommentsAdapter (val comments: ArrayList<Comment>): RecyclerView.Adapter
 
 
 
-        holder.avatar.setImageBitmap(comments[position].user.avatar)
-        holder.nick.text = comments[position].user.nick
+        holder.avatar.setImageBitmap(comments[position].avatar)
+        holder.nick.text = comments[position].nick
         holder.time.text = comments[position].getTimeStr()
         holder.comment.text = comments[position].comment
     }
 
+    fun makeAvatars() {
+        val userDB = UserDB()
+
+            comments.forEach {
+                try {
+                    var bitmap: Bitmap? = null
+                    runBlocking {
+                        bitmap = userDB.getAvatar(it.nick)
+
+                    }
+                    it.makeAvatarBitmap(context, bitmap)
+                } catch (e: Exception) {
+                    it.avatar = null
+                }
+
+
+            }
+
+
+
+        this@RvCommentsAdapter.notifyDataSetChanged()
+
+
+
+
+
+    }
 
 
 }

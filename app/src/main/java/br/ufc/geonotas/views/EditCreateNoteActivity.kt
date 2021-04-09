@@ -1,25 +1,19 @@
 package br.ufc.geonotas.views
 
-import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.KeyEvent
-import android.view.Menu
+import android.util.Log
 import android.view.MenuItem
 import android.widget.*
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import br.ufc.geonotas.R
-import br.ufc.geonotas.adapters.RvMarkedListAdapter
-import br.ufc.geonotas.db.PlacesDAO
-import br.ufc.geonotas.db.UsersDAO
+import br.ufc.geonotas.db.NoteDB
 import br.ufc.geonotas.models.Note
 import br.ufc.geonotas.models.User
-import br.ufc.geonotas.utils.Constants
 import br.ufc.geonotas.utils.Strings
-import com.google.android.gms.maps.MapView
+import br.ufc.geonotas.utils.toastShow
+import kotlinx.coroutines.*
+import java.io.IOException
 import java.time.LocalDateTime
-import kotlin.Exception
 
 class EditCreateNoteActivity : AppCompatActivity() {
 
@@ -29,19 +23,21 @@ class EditCreateNoteActivity : AppCompatActivity() {
 
     lateinit var txtNoteAddress: TextView
     lateinit var etNoteMessage: EditText
-    lateinit var acMark: AutoCompleteTextView
-    lateinit var rvMarked: RecyclerView
     lateinit var btnEditCreate: Button
 
+    private lateinit var rgVisibility: RadioGroup
+    private lateinit var radAll: RadioButton
+    private lateinit var radFollowers: RadioButton
+    private lateinit var radFriends: RadioButton
 
 
 
-    lateinit var markedList: ArrayList<User>
-    lateinit var rvMarkedAdapter: RecyclerView.Adapter<*>
-    private lateinit var rvMarkedManager: RecyclerView.LayoutManager
-
-    private var _placeId: String? = null
+    private var _noteId: String? = null
     private var _editing: Boolean = false
+    private var _note: Note? = null
+
+    private var latitude: Double? = null
+    private var longitude: Double? = null
 
 
 
@@ -55,9 +51,11 @@ class EditCreateNoteActivity : AppCompatActivity() {
             supportActionBar?.title = intent.getStringExtra("title")
          }
 
+        this._note = intent.getSerializableExtra("note") as Note?
 
 
-        markedList = ArrayList()
+
+
 
         ivNoteAvatar = findViewById(R.id.iv_edit_create_note_avatar)
         txtNoteNick = findViewById(R.id.txt_edit_create_note_nick)
@@ -65,150 +63,227 @@ class EditCreateNoteActivity : AppCompatActivity() {
 
         txtNoteAddress = findViewById(R.id.txt_editcreate_note_address)
         etNoteMessage = findViewById(R.id.et_editcreate_note_message)
-        acMark = findViewById(R.id.ac_editcreate_note_mark)
-        rvMarked = findViewById(R.id.rv_editcreate_note_maked)
+
         btnEditCreate = findViewById(R.id.btn_editcreate_note_create)
 
 
 
-        rvMarkedManager = LinearLayoutManager(this)
+        this.rgVisibility = findViewById(R.id.rg_edit_create_note_visibility)
+        this.radAll = findViewById(R.id.rad_editcreate_note_visibility_all)
+        this.radFollowers = findViewById(R.id.rad_editcreate_note_visibility_followers)
+        this.radFriends = findViewById(R.id.rad_editcreate_note_visibility_friends)
 
 
-        val markSuggestions = ArrayList<User>()
 
 
         ivNoteAvatar.setImageBitmap(User.loggedUser?.avatar)
         txtNoteNick.text = User.loggedUser?.nick
-
-
-
-        rvMarkedAdapter = RvMarkedListAdapter(markedList, this)
-        rvMarked.apply {
-            setHasFixedSize(false)
-            layoutManager = rvMarkedManager
-            adapter = rvMarkedAdapter
-        }
-
-
+        txtNoteTime.text = Strings.getTimeStr1(LocalDateTime.now())
 
         editActions()
 
-
-        acMark.setOnItemClickListener { parent, view, position, id ->
-
+        GlobalScope.launch {
+            updateAddress()
         }
 
-        acMark.setOnKeyListener { _, keyCode, _ ->
-
-            if(keyCode == KeyEvent.KEYCODE_ENTER){
-                val user = UsersDAO.getUser(this, acMark.text.toString())
-                if(user != null){
-
-                    if(!markedList.contains(user)){
-                        markedList.add(user)
-                        rvMarkedAdapter.notifyDataSetChanged()
-                        acMark.setText("")
-                    }
-
-
-                }
-
-
-
-            }
-
-            true
-        }
 
         btnEditCreate.setOnClickListener {
 
-            var id: String
-
-
-            if(_editing){
-                id = _placeId!!
-            } else {
-                if(Constants.TEST)
-                    id = etNoteMessage.text.toString().hashCode().toString()
-                else
-                    id = ""
+            GlobalScope.launch {
+                create()
             }
 
-            val note = Note(
-                    id,
-                    getLongitude(),
-                    getLatitude(),
-                    User.loggedUser!!,
-                    etNoteMessage.text.toString(),
-                    LocalDateTime.now()
 
-            )
+        }
+    }
 
-            try{
+    private suspend fun updateAddress(){
 
-                note.makeLocationStrings(this)
+        /**
+        var coordinates: Pair<Double,Double>? = null
+        val deferred = GlobalScope.async(Dispatchers.IO){
+            coordinates = getUserCoordinates(this@EditCreateNoteActivity)
+        }
 
-                if(_editing){
-                    PlacesDAO.updateNote(note)
-                } else {
-                    PlacesDAO.insertNote(note)
-                    Toast.makeText(this, "Nota criada com sucesso", Toast.LENGTH_LONG).show()
+        try {
+            deferred.await()
+        } catch (e: IOException){
+            runOnUiThread { toastShow(this, e.message) }
+            return
+        } catch (e: IllegalAccessException){
+            runOnUiThread { toastShow(this, e.message) }
+
+            return
+        }
+
+        //latitude = coordinates?.first
+        //longitude = coordinates?.second
+        */
+        latitude = User.latitude
+        longitude = User.longitude
+
+
+        if(latitude != null && longitude != null){
+            try {
+                kotlin.runCatching {
+                    val address = Strings.makeLocationStrings(this,latitude!!,longitude!!)
+                    runOnUiThread {
+                        txtNoteAddress.text = address
+                    }
+                }
+            } catch (e: IOException){
+                runOnUiThread { toastShow(this, e.message) }
+                return
+            } catch (e: IllegalAccessException){
+                runOnUiThread { toastShow(this, e.message) }
+                return
+            }
+
+        } else {
+            Log.d(TAG,"latitude ou longitude nulos")
+        }
+
+
+
+
+    }
+
+    private suspend fun create(){
+
+        var id: String? = null
+        val noteDB = NoteDB()
+
+        if(_editing){
+            id = _noteId!!
+            latitude = _note?.latitude
+            longitude = _note?.longitude
+        } else if(latitude == null || longitude == null){
+
+
+
+            //var pair: Pair<Double,Double>? = null
+
+
+/**
+            val deferred = GlobalScope.async(Dispatchers.IO){
+                pair = getUserCoordinates(this@EditCreateNoteActivity)
+            }
+
+            try {
+                deferred.await()
+            } catch (e: IOException){
+                toastShow(this,e.message)
+                return
+            } catch (e: IllegalAccessException){
+                toastShow(this, e.message)
+                return
+            }
+
+            if(pair != null){
+                latitude = pair?.first
+                longitude = pair?.second
+            }
+
+            */
+        }
+
+        latitude = User.latitude
+        longitude = User.longitude
+        val visibility = when (rgVisibility.checkedRadioButtonId){
+            radAll.id -> Note.VISIBILITY_FOR_ALL
+            radFollowers.id -> Note.VISIBILITY_FOLLOWERS
+            radFriends.id -> Note.VISIBILITY_FRIENDS
+            else -> {
+                Log.d("wtf","wtf")
+                return
+            }
+        }
+
+        val note = Note(
+                id,
+                latitude,
+                longitude,
+                User.loggedUser!!.nick,
+                etNoteMessage.text.toString(),
+                visibility,
+                LocalDateTime.now()
+
+        )
+
+
+
+
+
+         val deferred = GlobalScope.async(Dispatchers.IO){
+
+             noteDB.sendNote(note)
+         }
+
+         try {
+             deferred.await()
+         }catch (e: IOException){
+             toastShow(this,"Falha de conexão")
+             return
+         }
+
+
+        runOnUiThread {
+            if(_editing){
+                Toast.makeText(this, "Nota editada com sucesso", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(this, "Nota criada com sucesso", Toast.LENGTH_LONG).show()
+            }
+        }
+
+
+
+         finish()
+
+
+
+
+    }
+
+    private fun editActions(){
+
+
+        if(_note != null && _note is Note){
+
+            _editing = true
+
+
+
+            _noteId = _note!!.id
+            txtNoteAddress.text = _note!!.getAdress()
+            etNoteMessage.setText(_note!!.message)
+            txtNoteTime.text = Strings.getTimeStr1(_note!!.datetime)
+            btnEditCreate.text = getString(R.string.str_editcreate_activity_finalize)
+
+            when(_note?.visibility){
+                Note.VISIBILITY_FOR_ALL -> {
+                    radAll.isChecked = true
+                }
+
+                Note.VISIBILITY_FRIENDS -> {
+                    radFriends.isChecked = true
+                }
+
+                Note.VISIBILITY_FOLLOWERS -> {
+                    radFollowers.isChecked = true
                 }
 
 
 
-
-
-                finish()
-            } catch (x: Exception){
-                x.printStackTrace()
-                throw x
             }
 
 
-        }
-    }
 
-    fun editActions(){
-        val note = intent.getSerializableExtra("note")
-
-        if(note != null){
-            if(note is Note){
-                _editing = true
-                var marked = UsersDAO.getUsersMarkedsAtPlace(this, note.placeId)
-
-                if(marked == null)
-                    marked = ArrayList<User>()
-
-                _placeId = note.placeId
-                txtNoteAddress.text = note.getAdress()
-                etNoteMessage.setText(note.message)
-                markedList.addAll(marked)
-                txtNoteTime.text = Strings.getTimeStr1(note.timestamp)
-                btnEditCreate.text = getString(R.string.str_editcreate_activity_finalize)
-
-
-            }
 
         }
 
 
     }
 
-    //-5.125757190548865, -39.73507826540769
-    /**
-     * Obtém o equivalente à coordenada X no mapa bidimensional
-      */
-    fun getLongitude(): Double{
-        return -5.125757190548865
-    }
-
-    /**
-     * Obtém o equivalente à coordenada Y no mapa bidimensional
-     */
-    fun getLatitude(): Double{
-        return -39.73507826540769
-    }
 
 
 
@@ -221,5 +296,9 @@ class EditCreateNoteActivity : AppCompatActivity() {
 
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    companion object{
+        private  const val TAG = "EditCreateNote"
     }
 }

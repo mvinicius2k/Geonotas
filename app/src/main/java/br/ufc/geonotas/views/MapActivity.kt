@@ -4,20 +4,18 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.location.Location
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.MenuItem
-import android.widget.Toast
-import androidx.core.app.ActivityCompat
 import br.ufc.geonotas.R
-import br.ufc.geonotas.db.PlacesDAO
+import br.ufc.geonotas.db.NoteDB
+import br.ufc.geonotas.db.UserDB
 import br.ufc.geonotas.models.Note
 import br.ufc.geonotas.models.User
-import br.ufc.geonotas.utils.Constants
-import br.ufc.geonotas.utils.Preferences
-import com.google.android.gms.common.api.internal.TaskUtil
+import br.ufc.geonotas.utils.*
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 
@@ -26,10 +24,13 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.tasks.Task
-import java.lang.Exception
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import java.io.IOException
+import java.util.HashSet
 
 class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -54,30 +55,93 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
         }
 
-        if(_action == Constants.ACTION_FULL_MAP)
-            _notes = intent.getSerializableExtra("notes") as ArrayList<Note>
-        else if (_action == Constants.ACTION_POINT_MAP)
+        if(_action == Constants.ACTION_FULL_MAP){
+            _notes = ArrayList()
+        }  else if (_action == Constants.ACTION_POINT_MAP)
             _notes = ArrayList()
         else
             _notes = ArrayList()
 
         _notesMarked = HashMap()
-        val mapFragment = supportFragmentManager
-            .findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment.getMapAsync(this)
+
+        GlobalScope.launch {
+            getPoints()
+        }
+
+
 
 
     }
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
+    suspend fun getPoints(){
+
+
+        val noteDB = NoteDB()
+        val userDB = UserDB()
+
+
+
+
+        var notesArray: Array<Note>? = null
+        val deferred = GlobalScope.async(Dispatchers.IO){
+            notesArray = noteDB.getNotes(User.loggedUser!!, MainActivity.MAIN)
+
+        }
+
+        try {
+            deferred.await()
+        } catch (e: IOException){
+            toastShow(this, e.message)
+            return
+        }
+
+        val avatarsToGet = HashSet<String>()
+
+        avatarsToGet.addAll(notesArray?.map { it.op }!!)
+
+        val avatars = LinkedHashMap<String, Bitmap?>()
+        val gettingAvatars = GlobalScope.async(Dispatchers.IO){
+            avatarsToGet.forEach {
+                avatars[it] = userDB.getAvatar(it)
+            }
+        }
+
+        try {
+            gettingAvatars.await()
+        } catch (e: IOException){
+            toastShow(this, e.message)
+            return
+        }
+
+        notesArray!!.forEach {
+            it.makeAvatarBitmap(this, avatars[it.op])
+            try {
+                kotlin.runCatching {
+                    it.address = Strings.makeLocationStrings(this, it.latitude!!,it.longitude!!)
+                }
+            } catch (e: IOException){
+                it.address = ""
+            } catch (e: IllegalAccessException){
+                it.address = ""
+            }
+        }
+
+
+
+
+        _notes.addAll(notesArray!!)
+
+        runOnUiThread {
+            val mapFragment = supportFragmentManager
+                    .findFragmentById(R.id.map) as SupportMapFragment
+            mapFragment.getMapAsync(this)
+        }
+
+
+
+    }
+
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
 
 
@@ -108,13 +172,11 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 if (i != null) {
                     val note = _notes[i]
-                    if (note != null) {
 
 
-                        val intent = Intent(this, NoteActivity::class.java)
-                        intent.putExtra("note", note)
-                        startActivity(intent)
-                    }
+                    val intent = Intent(this, NoteActivity::class.java)
+                    intent.putExtra("note", note)
+                    startActivity(intent)
                 }
 
                 true
@@ -131,29 +193,19 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
 
-
-
-        // Add a marker in Sydney and move the camera
-        /*val sydney = LatLng(-34.0, 151.0)
-        mMap.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
-        */
-
-
-
-
-
-
-
     }
 
 
 
+
     @SuppressLint("MissingPermission")
-    fun  fillPoints(){
+    private fun  fillPoints(){
 
 
-        permissionCheck()
+        if(!hasPermissionLocation(this)) {
+            Log.d(TAG,"Sem permissão para obter localização")
+            return
+        }
 
 
 
@@ -178,9 +230,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                     var i = 0
 
 
-
                     _notes.forEach {
-                        val point = LatLng(it.latitude, it.longitude)
+                        val point = LatLng(it.latitude!!, it.longitude!!)
 
                         val noteLocation = Location("NoteLocation")
                         noteLocation.latitude = point.latitude
@@ -192,7 +243,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                         if (distance < Preferences.distance){
                             val markerOptions = MarkerOptions()
                                 .position(point)
-                                .title(it.op.nick)
+                                .title(it.op)
 
 
                             val id = mMap.addMarker(markerOptions).id
@@ -218,23 +269,5 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
     }
 
-    fun permissionCheck() {
-        //Verificar permissões
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
 
-            // Chamar para aceitar permições
-
-            throw NoSuchElementException()
-            return
-        }
-
-
-    }
 }

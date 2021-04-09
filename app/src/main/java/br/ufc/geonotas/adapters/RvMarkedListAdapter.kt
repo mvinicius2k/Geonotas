@@ -11,8 +11,13 @@ import br.ufc.geonotas.R
 import br.ufc.geonotas.models.User
 import br.ufc.geonotas.myPalette.Icon
 import br.ufc.geonotas.views.EditCreateNoteActivity
+import br.ufc.geonotas.views.ProfileActivity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
-class RvMarkedListAdapter (val users: ArrayList<User>, val context: Context): RecyclerView.Adapter<RvMarkedListAdapter.MyViewHolder>() {
+class RvMarkedListAdapter (val users: ArrayList<User>, val context: Context, val removable: Boolean = true):
+    RecyclerView.Adapter<RvMarkedListAdapter.MyViewHolder>() {
 
     private val TAG = "RvMarkedListAdapter"
 
@@ -47,12 +52,19 @@ class RvMarkedListAdapter (val users: ArrayList<User>, val context: Context): Re
         holder.nick.text = user.nick
         holder.fullname.text = user.getFullname()
 
-        holder.ibRemove.setOnClickListener {
-            if(context is EditCreateNoteActivity){
-                context.markedList.removeAt(position)
-                context.rvMarkedAdapter.notifyItemRemoved(position)
+        if(!removable)
+            holder.ibRemove.visibility = View.GONE
 
+        holder.ibRemove.setOnClickListener {
+
+            GlobalScope.launch {
+                if(context is ProfileActivity){
+
+                    context.removeFriend(user.nick)
+                }
             }
+
+
         }
 
 

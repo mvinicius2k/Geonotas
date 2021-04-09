@@ -45,9 +45,8 @@
                     android:textAlignment="center" />
 
                 <View
-                    android:id="@+id/v_note_bar"
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
+                    android:layout_width="@dimen/view_bar_width"
+                    android:layout_height="@dimen/view_bar_height"
                     android:layout_gravity="center"
                     android:layout_marginTop="5dp"
                     android:layout_marginBottom="5dp"
@@ -71,29 +70,37 @@
                     android:text="" />
 
                 <TextView
-                    android:id="@+id/txt_editcreate_note_mark"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="25dp"
-                    android:text="@string/txt_editcreate_note_mark"
+                    android:inputType="textPersonName"
+                    android:text="@string/txt_editcreate_note_visibility"
                     android:textAppearance="@style/TextAppearance.AppCompat.Large"
-                    android:textStyle="bold"
-                    android:inputType="textPersonName"/>
+                    android:textStyle="bold" />
 
-                <AutoCompleteTextView
-                    android:id="@+id/ac_editcreate_note_mark"
+                <RadioGroup
+                    android:id="@+id/rg_edit_create_note_visibility"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:hint="@string/ac_editcreate_adduser" />
+                    android:layout_height="wrap_content">
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rv_editcreate_note_maked"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginTop="10dp">
+                    <RadioButton
+                        android:id="@+id/rad_editcreate_note_visibility_all"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/rad_editcreate_note_visibility_all" />
 
-                </androidx.recyclerview.widget.RecyclerView>
+                    <RadioButton
+                        android:id="@+id/rad_editcreate_note_visibility_followers"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/rad_editcreate_note_visibility_followers" />
+
+                    <RadioButton
+                        android:id="@+id/rad_editcreate_note_visibility_friends"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/rad_editcreate_note_visibility_friends" />
+                </RadioGroup>
 
                 <Button
                     android:id="@+id/btn_editcreate_note_create"
@@ -101,6 +108,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="25dp"
                     android:text="@string/btn_editcreate_note_editcreate" />
+
             </LinearLayout>
 
         </LinearLayout>

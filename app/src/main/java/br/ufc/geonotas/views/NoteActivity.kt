@@ -1,8 +1,6 @@
 package br.ufc.geonotas.views
 
-import android.content.ClipData
 import android.content.Intent
-import android.graphics.drawable.Icon
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Menu
@@ -12,14 +10,15 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import br.ufc.geonotas.R
 import br.ufc.geonotas.adapters.RvCommentsAdapter
-import br.ufc.geonotas.db.CommentsDAO
-import br.ufc.geonotas.db.PlacesDAO
-import br.ufc.geonotas.db.UsersDAO
+import br.ufc.geonotas.db.*
 import br.ufc.geonotas.models.Comment
 import br.ufc.geonotas.models.Note
 import br.ufc.geonotas.models.User
 import br.ufc.geonotas.utils.Constants
 import br.ufc.geonotas.utils.Strings
+import br.ufc.geonotas.utils.toastShow
+import kotlinx.coroutines.*
+import java.io.IOException
 import java.lang.Exception
 import java.time.LocalDateTime
 
@@ -66,14 +65,19 @@ class NoteActivity : AppCompatActivity() {
 
 
         _note = intent.getSerializableExtra("note") as Note
-        _note.op.makeBitmap(this)
+        _note.makeAvatarBitmap(this)
+
 
 
         fillFields()
 
-        btnSend.setOnClickListener {
+        fillComments()
 
-            sendComment()
+        btnSend.setOnClickListener {
+            GlobalScope.launch {
+                sendComment()
+            }
+
         }
 
 
@@ -87,18 +91,20 @@ class NoteActivity : AppCompatActivity() {
 
     fun fillFields(){
 
-        _commentsList = CommentsDAO.getLastCommentsOfNote(this,_note.placeId)
 
-        ivNoteAvatar.setImageBitmap(_note.op.avatar)
-        txtNoteNick.text = _note.op.nick
-        txtNoteTime.text = Strings.getTimeStr1(_note.timestamp)
+
+
+        icnNoteCommentAvatar.setImageBitmap(User.loggedUser?.avatar)
+        ivNoteAvatar.setImageBitmap(_note.avatar)
+        txtNoteNick.text = _note.op
+        txtNoteTime.text = Strings.getTimeStr1(_note.datetime)
         txtNoteMessage.text = _note.message
         txtNoteAddress.text = _note.getAdress()
 
 
 
         _rvCommentsManager = LinearLayoutManager(this)
-        _rvCommentsAdapter = RvCommentsAdapter(_commentsList)
+        _rvCommentsAdapter = RvCommentsAdapter(_commentsList, this)
         rvComments.apply {
             setHasFixedSize(false)
             layoutManager = _rvCommentsManager
@@ -106,50 +112,81 @@ class NoteActivity : AppCompatActivity() {
         }
     }
 
-    private fun sendComment(){
+    private fun fillComments(){
+        val commentDB = CommentDB()
+        commentDB.listenerNote(_note.id!!, rvComments.adapter as RvCommentsAdapter)
 
+    }
 
+    private suspend fun sendComment(){
+
+        val commentDB = CommentDB()
 
         val commentText = etComment.text.toString()
 
-        if(commentText.isBlank()){
+        if(commentText.isNullOrBlank()){
             Toast.makeText(this,getString(R.string.str_note_activity_empty_message), Toast.LENGTH_SHORT).show()
             return
         }
 
-        if(Constants.TEST){
-            val comment = Comment(
-                LocalDateTime.now().hashCode().toString(),
-                UsersDAO.getUser(this, Constants.USER_NICK_SECTION)!!,
-                commentText,
-                LocalDateTime.now()
 
+        val comment = Comment(
+            null,
+                _note.id!!,
+            User.loggedUser?.nick!!,
+            commentText,
+            LocalDateTime.now()
+        )
 
+        val deferred = GlobalScope.async (Dispatchers.IO){
+            commentDB.sendComment(comment)
+        }
 
-            )
-
-            if(!CommentsDAO.commentsList.contains(comment))
-                CommentsDAO.commentsList.add(comment)
-
-            _rvCommentsAdapter.notifyDataSetChanged()
-
+        try {
+            deferred.await()
+        } catch (e: IOException){
+            toastShow(this,e.message)
         }
 
 
 
 
-        etComment.setText("")
+
+
+
+
+        runOnUiThread { etComment.setText("") }
+
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_note, menu)
 
-        if(User.loggedUser != _note.op){
+        if(User.loggedUser?.nick != _note.op){
             menu?.findItem(R.id.menu_my_notes_remove)!!.isVisible = false
             menu?.findItem(R.id.menu_my_notes_edit)!!.isVisible = false
         }
 
         return true
+    }
+
+    private suspend fun removeNote(){
+        val noteDB = NoteDB()
+
+        val deferred = GlobalScope.async(Dispatchers.IO){
+            noteDB.removeNote(_note.id!!,_note.op)
+        }
+        try {
+            deferred.await()
+        } catch (e: IOException){
+            runOnUiThread { toastShow(this, e.message) }
+        }
+
+        runOnUiThread {
+            toastShow(this, "Nota apagada")
+        }
+        finish()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -162,12 +199,8 @@ class NoteActivity : AppCompatActivity() {
             }
 
             R.id.menu_my_notes_remove -> {
-                try{
-                    PlacesDAO.deleteNote(_note.placeId)
-                    Toast.makeText(this, getString(R.string.str_note_activity_remove_sucess), Toast.LENGTH_SHORT).show()
-                    finish()
-                } catch (e: Exception){
-
+                GlobalScope.launch {
+                    removeNote()
                 }
 
             }

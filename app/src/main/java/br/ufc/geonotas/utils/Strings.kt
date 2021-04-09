@@ -1,14 +1,37 @@
 package br.ufc.geonotas.utils
 
+import android.content.Context
+import android.location.Geocoder
+import android.util.Log
+import android.widget.Toast
+import br.ufc.geonotas.R
+import java.io.IOException
 import java.time.Duration
 import java.time.LocalDateTime
+import java.time.ZoneId
+import java.util.*
+import kotlin.system.exitProcess
 
 class Strings {
     companion object{
+
+        @Throws(IOException::class, IllegalArgumentException::class)
+        fun makeLocationStrings(context: Context, latitude: Double, longitude: Double): String? {
+
+
+            val geocoder = Geocoder(context, Locale.getDefault())
+
+            val addresses = geocoder.getFromLocation(latitude, longitude, Constants.MAX_LOCATION)
+
+
+            return addresses[0].getAddressLine(0)
+
+
+        }
+
         /**
          * Retorna num padrão "Agora", "Há 1 minuto", "Há x minutos" ou "dd/MM/yyyy hh:mm"
          */
-
         private fun isToday(time: LocalDateTime): Boolean{
             val now = LocalDateTime.now()
             return time.dayOfYear == now.dayOfYear && time.year == now.year
@@ -47,5 +70,7 @@ class Strings {
             else
                 return value.toString()
         }
+
+
     }
 }

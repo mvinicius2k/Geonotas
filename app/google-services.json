@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "332472731129",
+    "project_id": "geonotas",
+    "storage_bucket": "geonotas.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:332472731129:android:90a955ccc172b072152928",
+        "android_client_info": {
+          "package_name": "br.ufc.geonotas"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "332472731129-giu9q10efle6rvho04u5a96fr4jhhqj5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqh17nAte547ivml4B7NsEx8P3ctsRkps"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "332472731129-giu9q10efle6rvho04u5a96fr4jhhqj5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
