@@ -14,7 +14,7 @@
     <string name="txt_singup_select_text">Selecione uma imagem de perfil: </string>
     <string name="btn_singup_select_image"> Selecionar... </string>
     <string name="btn_singup_ok"> Finalizar </string>
-    <string name="title_activity_main">MainActivity</string>
+    <string name="title_activity_main">Geonotas</string>
     <string name="menu_master_my_notes">Minhas notas</string>
     <string name="menu_master_marked_notes">Notas marcadas</string>
     <string name="menu_master_map">Mapa</string>
@@ -35,7 +35,7 @@
     <string name="str_note_activity_empty_message">Escreva algo</string>
     <string name="str_main_activity_title_main">Geonotas</string>
     <string name="str_main_activity_title_mynotes">Minhas notas</string>
-    <string name="str_main_activity_title_marked">Notas marcadas</string>
+    <string name="str_main_activity_title_marked">Notas de quem sigo</string>
     <string name="str_main_activity_title_addnote">Nova nota</string>
     <string name="str_editcreate_activity_finalize">Concluir</string>
     <string name="title_activity_map">Map</string>

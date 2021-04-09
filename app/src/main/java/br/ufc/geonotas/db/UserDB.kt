@@ -173,6 +173,7 @@ class UserDB() : Connection(Constants.TABLE_USERS) {
                 if(it.value != null){
                     val hs = it.value as HashMap<*, *>
 
+
                     if( hs[User::pass.name] != hashpass)
                         resultAuthKind = ResultAuthKind.AUTH_FAILED
                     else {

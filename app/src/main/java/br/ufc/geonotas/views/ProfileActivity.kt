@@ -1,6 +1,5 @@
 package br.ufc.geonotas.views
 
-import android.annotation.SuppressLint
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -278,7 +277,7 @@ class ProfileActivity : AppCompatActivity() {
 
         val userDB = UserDB()
 
-
+        friedsList.clear()
         val deferred = GlobalScope.async(Dispatchers.IO) {
             friedsList.addAll(userDB.getUsers(user.friends.toTypedArray(), this@ProfileActivity))
 

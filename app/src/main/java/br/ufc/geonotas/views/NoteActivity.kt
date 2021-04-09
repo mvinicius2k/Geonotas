@@ -3,6 +3,7 @@ package br.ufc.geonotas.views
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.*
@@ -17,6 +18,7 @@ import br.ufc.geonotas.models.User
 import br.ufc.geonotas.utils.Constants
 import br.ufc.geonotas.utils.Strings
 import br.ufc.geonotas.utils.toastShow
+import com.google.firebase.database.ValueEventListener
 import kotlinx.coroutines.*
 import java.io.IOException
 import java.lang.Exception
@@ -38,6 +40,8 @@ class NoteActivity : AppCompatActivity() {
     private lateinit var _rvCommentsManager: RecyclerView.LayoutManager
     private lateinit var _commentsList: ArrayList<Comment>
     private lateinit var _note: Note
+
+    private var listenerRef: ValueEventListener? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -112,9 +116,28 @@ class NoteActivity : AppCompatActivity() {
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+        Log.d("NoteActivity","Parando")
+        val commentDB = CommentDB()
+        commentDB.removeListener(_note.id!!, listenerRef!!)
+    }
+
+
+
     private fun fillComments(){
         val commentDB = CommentDB()
-        commentDB.listenerNote(_note.id!!, rvComments.adapter as RvCommentsAdapter)
+        commentDB.listenerNote(_note.id!!, this)
+        this.listenerRef = commentDB.listener
+
+    }
+
+    public fun updateCommentsUI(array: Array<Comment>?){
+        if(array != null){
+            _commentsList.clear()
+            _commentsList.addAll(array)
+            _rvCommentsAdapter.notifyDataSetChanged()
+        }
 
     }
 

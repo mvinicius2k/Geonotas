@@ -138,7 +138,10 @@ class NoteDB: Connection(Constants.TABLE_NOTES) {
                                     val notesHm = it.value as HashMap<*,*>
                                     notesHm.values.forEach {
                                         val note = Note.fromHashMap(it as HashMap<*, *>)
-                                        notes.add(note)
+                                        if(note.visibility != Note.VISIBILITY_FOR_ALL)
+                                            notes.add(note)
+
+
                                     }
 
                                 }.await()

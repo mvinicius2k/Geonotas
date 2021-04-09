@@ -295,13 +295,6 @@ class MainActivity : AppCompatActivity() {
                 startActivityForResult(intent, MAP)
 
 
-                /**
-                val intent = Intent(this, MapsActivity::class.java)
-                //intent.putExtra("notes", notes.toTypedArray())
-                startActivityForResult(intent, MAP)
-
-                **/
-
             }
 
             R.id.menu_master_preferences -> {
