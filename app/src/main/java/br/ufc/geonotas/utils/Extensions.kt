@@ -23,6 +23,7 @@ import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import pub.devrel.easypermissions.EasyPermissions
 import java.io.IOException
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -102,7 +103,7 @@ suspend  fun updateUserCoordinates(context: Context){
         //return pair
 
     } else{
-        throw IllegalAccessException("Não há permissão para obter sua localização")
+
     }
 
 

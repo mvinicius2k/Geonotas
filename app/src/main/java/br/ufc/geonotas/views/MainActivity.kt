@@ -20,13 +20,20 @@ import br.ufc.geonotas.utils.Strings
 import br.ufc.geonotas.utils.toastShow
 import br.ufc.geonotas.utils.updateUserCoordinates
 import kotlinx.coroutines.*
+import pub.devrel.easypermissions.AfterPermissionGranted
+import pub.devrel.easypermissions.AppSettingsDialog
+import pub.devrel.easypermissions.EasyPermissions
 import java.io.IOException
 import java.lang.Exception
 import java.util.*
+import java.util.jar.Manifest
 import kotlin.collections.LinkedHashMap
 
 
-class MainActivity : AppCompatActivity() {
+
+
+
+class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
     lateinit var notes : LinkedList<Note>
 
@@ -316,6 +323,24 @@ class MainActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
+    @AfterPermissionGranted(RC_LOCATION)
+    private fun methodRequiresTwoPermission() {
+        val perms =
+            arrayOf<String>(android.Manifest.permission.ACCESS_FINE_LOCATION)
+        if (EasyPermissions.hasPermissions(this, *perms)) {
+            // Already have permission, do the thing
+            // ...
+        } else {
+            // Do not have permissions, request them now
+            EasyPermissions.requestPermissions(
+                this, getString(R.string.global_request_permission_loc),
+                RC_LOCATION, *perms
+            )
+        }
+    }
+
+
+
     companion object{
         const val MAIN = 0
         const val MY_NOTES = 1
@@ -323,6 +348,17 @@ class MainActivity : AppCompatActivity() {
         const val FRIENDS = 3
         const val MAP = 4
         private const val TAG = "MainActivity"
+        const val RC_LOCATION = 123
 
+    }
+
+    override fun onPermissionsGranted(requestCode: Int, perms: MutableList<String>) {
+
+    }
+
+    override fun onPermissionsDenied(requestCode: Int, perms: MutableList<String>) {
+        if(EasyPermissions.somePermissionPermanentlyDenied(this, perms)){
+            AppSettingsDialog.Builder(this).build().show()
+        }
     }
 }

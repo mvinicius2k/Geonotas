@@ -54,4 +54,5 @@
     <string name="rad_editcreate_note_visibility_all">Para todos</string>
     <string name="rad_editcreate_note_visibility_followers">Apenas seguidores</string>
     <string name="rad_editcreate_note_visibility_friends">Apenas amigos</string>
+    <string name="global_request_permission_loc">Precisamos da sua localização</string>
 </resources>
